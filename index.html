@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ArcWright — Build Worlds. Write Them.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ── TOKENS ── */
+:root {
+  --ink:    #1a1710;
+  --ink2:   #3d3a30;
+  --ink3:   #7a7568;
+  --paper:  #faf8f3;
+  --paper2: #f2efe8;
+  --paper3: #e8e4d8;
+  --gold:   #b8923a;
+  --gold2:  #d4aa58;
+  --border: rgba(26,23,16,0.12);
+  --border2:rgba(26,23,16,0.22);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'Raleway', sans-serif;
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-display);
+  background: var(--paper);
+  color: var(--ink);
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.6;
+}
+
+/* ── TYPOGRAPHY ── */
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; }
+p { font-family: var(--font-display); font-size: 1.15rem; color: var(--ink2); line-height: 1.8; }
+.ui { font-family: var(--font-ui); }
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 1.25rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(250,248,243,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav-brand span { color: var(--gold); }
+.nav-links { display: flex; gap: 2rem; align-items: center; }
+.nav-links a {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav-cta {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 1.4rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.1s;
+}
+.nav-cta:hover { background: var(--ink2); transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8rem 2rem 6rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, var(--border2), transparent);
+}
+.hero-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s forwards;
+}
+.hero-title {
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.35s forwards;
+}
+.hero-title em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--ink);
+}
+.hero-title .accent { color: var(--gold); }
+.hero-subtitle {
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ink3);
+  margin-bottom: 2.5rem;
+  max-width: 560px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.5s forwards;
+}
+.hero-desc {
+  font-size: 1.1rem;
+  color: var(--ink2);
+  max-width: 520px;
+  margin: 0 auto 3rem;
+  line-height: 1.9;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.65s forwards;
+}
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.8s forwards;
+}
+.btn-primary {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1rem 2.4rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1.5px solid var(--ink);
+}
+.btn-primary:hover { background: transparent; color: var(--ink); transform: translateY(-2px); }
+.btn-secondary {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--ink2);
+  padding: 1rem 2rem;
+  border-radius: 2px;
+  text-decoration: none;
+  border: 1.5px solid var(--border2);
+  transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(--ink2); color: var(--ink); transform: translateY(-2px); }
+.hero-note {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+  margin-top: 1.2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.95s forwards;
+}
+
+/* decorative ruled lines */
+.hero-rule {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.45s forwards;
+}
+.hero-rule::before, .hero-rule::after {
+  content: ''; flex: 1; height: 0.5px; background: var(--border2);
+}
+.hero-rule-glyph {
+  font-size: 0.8rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+}
+
+/* ── SECTION BASE ── */
+section { padding: 7rem 2rem; }
+.container { max-width: 1080px; margin: 0 auto; }
+.section-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  display: block;
+}
+.section-title {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+  line-height: 1.15;
+}
+.section-title em { font-style: italic; font-weight: 600; }
+.section-body {
+  font-size: 1.1rem;
+  color: var(--ink2);
+  max-width: 560px;
+  line-height: 1.9;
+}
+
+/* ── PROBLEM SECTION ── */
+.problem {
+  background: var(--paper2);
+  border-top: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
+}
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-top: 4rem;
+}
+.problem-quotes { display: flex; flex-direction: column; gap: 1.5rem; }
+.problem-quote {
+  padding: 1.5rem 1.75rem;
+  border-left: 2px solid var(--paper3);
+  background: var(--paper);
+  position: relative;
+}
+.problem-quote::before {
+  content: '"';
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--paper3);
+  position: absolute;
+  top: 0.5rem; left: 1rem;
+  line-height: 1;
+}
+.problem-quote p {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--ink2);
+  padding-left: 0.5rem;
+}
+.problem-answer { }
+.problem-answer p { margin-bottom: 1.25rem; }
+.problem-answer p:last-child { margin-bottom: 0; }
+
+/* ── FEATURES ── */
+.features { background: var(--paper); }
+.features-intro { text-align: center; max-width: 600px; margin: 0 auto 5rem; }
+.features-intro .section-body { margin: 0 auto; text-align: center; }
+.feature-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5px;
+  background: var(--border);
+  border: 0.5px solid var(--border);
+  margin-bottom: 0;
+  overflow: hidden;
+}
+.feature-tab {
+  background: var(--paper);
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.feature-tab:hover { background: var(--paper2); }
+.feature-tab.active { background: var(--ink); }
+.feature-tab-num {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+.feature-tab.active .feature-tab-num { color: var(--gold2); }
+.feature-tab-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.feature-tab.active .feature-tab-title { color: var(--paper); }
+.feature-tab-desc {
+  font-size: 0.92rem;
+  color: var(--ink3);
+  line-height: 1.6;
+  font-family: var(--font-display);
+}
+.feature-tab.active .feature-tab-desc { color: rgba(250,248,243,0.7); }
+.feature-panels { border: 0.5px solid var(--border); border-top: none; background: var(--paper2); }
+.feature-panel { display: none; padding: 3rem; }
+.feature-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+.feature-panel-text h3 { font-size: 1.8rem; font-weight: 400; margin-bottom: 1rem; color: var(--ink); }
+.feature-panel-text h3 em { font-style: italic; font-weight: 600; }
+.feature-panel-text p { font-size: 1rem; color: var(--ink2); line-height: 1.85; margin-bottom: 1rem; }
+.feature-panel-text p:last-child { margin-bottom: 0; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--ink2);
+  font-family: var(--font-display);
+  line-height: 1.5;
+}
+.feature-list li::before {
+  content: '✦';
+  color: var(--gold);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+}
+
+/* mock screen */
+.mock-screen {
+  background: var(--ink);
+  border-radius: 6px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(26,23,16,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.mock-screen::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 28px;
+  background: rgba(255,255,255,0.05);
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+}
+.mock-dots {
+  position: absolute;
+  top: 9px; left: 12px;
+  display: flex; gap: 5px;
+}
+.mock-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+.mock-content { margin-top: 1.5rem; }
+.mock-label {
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(250,248,243,0.3);
+  margin-bottom: 0.4rem;
+}
+.mock-field {
+  background: rgba(255,255,255,0.05);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.mock-field-text {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: rgba(250,248,243,0.7);
+  line-height: 1.5;
+}
+.mock-field-text.large {
+  font-size: 1.1rem;
+  color: rgba(250,248,243,0.9);
+  font-weight: 600;
+}
+.mock-tag {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 0.5px solid;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+.mock-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.mock-half { flex: 1; }
+.mock-dots-rank { display: flex; gap: 3px; align-items: center; margin-top: 4px; }
+.mock-rank-dot { width: 7px; height: 7px; border-radius: 50%; }
+.mock-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+}
+.mock-section-pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.mock-section-name {
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(250,248,243,0.4);
+  flex: 1;
+}
+
+/* ── TABS AS MODULES ── */
+.modules {
+  background: var(--paper2);
+  border-top: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
+}
+.modules-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  background: transparent;
+  border: none;
+  margin-top: 4rem;
+  overflow: hidden;
+}
+.modules-row {
+  display: flex;
+  gap: 1.5px;
+  background: var(--border);
+}
+.modules-row .module-card {
+  flex: 1;
+}
+.modules-row-bottom {
+  justify-content: center;
+  background: transparent;
+  gap: 1.5px;
+}
+.modules-row-bottom .module-card {
+  flex: 0 0 calc(25% - 1.5px);
+  max-width: calc(25% - 1.5px);
+  border: 0.5px solid var(--border);
+}
+.module-card {
+  background: var(--paper2);
+  padding: 2.5rem 2rem;
+  transition: background 0.15s;
+}
+.module-card:hover { background: var(--paper); }
+.module-icon {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+.module-name {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.module-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+}
+.module-desc {
+  font-size: 0.9rem;
+  color: var(--ink3);
+  line-height: 1.65;
+  font-family: var(--font-display);
+}
+
+/* ── HOW IT WORKS ── */
+.how { background: var(--paper); }
+.steps { display: flex; flex-direction: column; gap: 0; margin-top: 4rem; }
+.step {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 2rem;
+  padding: 2.5rem 0;
+  border-bottom: 0.5px solid var(--border);
+  position: relative;
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: var(--paper3);
+  line-height: 1;
+  padding-top: 0.2rem;
+  user-select: none;
+}
+.step-content h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.step-content p { font-size: 1rem; color: var(--ink2); line-height: 1.8; }
+
+/* ── PRINCIPLES ── */
+.principles {
+  background: var(--ink);
+  color: var(--paper);
+}
+.principles .section-eyebrow { color: var(--gold2); }
+.principles .section-title { color: var(--paper); }
+.principles .section-body { color: rgba(250,248,243,0.65); }
+.principles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 4rem;
+}
+.principle {
+  padding: 2rem;
+  border: 0.5px solid rgba(250,248,243,0.1);
+  border-radius: 2px;
+}
+.principle-mark {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-style: italic;
+  color: var(--gold2);
+  margin-bottom: 1rem;
+  display: block;
+}
+.principle h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--paper);
+  margin-bottom: 0.6rem;
+}
+.principle p {
+  font-size: 0.92rem;
+  color: rgba(250,248,243,0.55);
+  line-height: 1.75;
+}
+
+/* ── PRICING ── */
+.pricing { background: var(--paper2); border-top: 0.5px solid var(--border); }
+.pricing-card {
+  max-width: 500px;
+  margin: 4rem auto 0;
+  background: var(--paper);
+  border: 0.5px solid var(--border2);
+  padding: 3.5rem;
+  text-align: center;
+  position: relative;
+}
+.pricing-card::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 10%; right: 10%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+}
+.pricing-price {
+  font-size: 3.5rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+.pricing-price span {
+  font-size: 1.5rem;
+  font-weight: 400;
+  vertical-align: super;
+  color: var(--ink3);
+}
+.pricing-model {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+  display: block;
+}
+.pricing-desc {
+  font-size: 1rem;
+  color: var(--ink2);
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+.pricing-includes {
+  text-align: left;
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.pricing-include {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--ink2);
+  font-family: var(--font-display);
+}
+.pricing-include::before {
+  content: '✓';
+  color: var(--gold);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.pricing-cta {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1rem 2rem;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1.5px solid var(--ink);
+}
+.pricing-cta:hover { background: transparent; color: var(--ink); }
+.pricing-note {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+  margin-top: 1rem;
+  display: block;
+}
+
+/* ── FAQ ── */
+.faq { background: var(--paper); }
+.faq-list { max-width: 680px; margin: 4rem auto 0; display: flex; flex-direction: column; gap: 0; }
+.faq-item { border-bottom: 0.5px solid var(--border); }
+.faq-q {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 1.5rem 0;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.faq-q-text {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.faq-q-icon {
+  font-size: 1.2rem;
+  color: var(--ink3);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.faq-item.open .faq-q-icon { transform: rotate(45deg); }
+.faq-a {
+  display: none;
+  padding: 0 0 1.5rem;
+  font-size: 1rem;
+  color: var(--ink2);
+  line-height: 1.85;
+  font-family: var(--font-display);
+}
+.faq-item.open .faq-a { display: block; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 4rem 2rem;
+  text-align: center;
+}
+.footer-brand {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  margin-bottom: 0.75rem;
+}
+.footer-brand span { color: var(--gold2); }
+.footer-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(250,248,243,0.45);
+  margin-bottom: 2rem;
+}
+.footer-note {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: rgba(250,248,243,0.3);
+  line-height: 1.8;
+}
+.footer-divider { width: 40px; height: 0.5px; background: rgba(250,248,243,0.15); margin: 1.5rem auto; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .problem-grid, .feature-panel.active, .principles-grid { grid-template-columns: 1fr; }
+  .feature-tabs { grid-template-columns: 1fr; }
+  .pricing-card { padding: 2.5rem 1.5rem; }
+  section { padding: 5rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="https://dylandroptinydesigns.gumroad.com/l/ArcWright" class="nav-brand">Arc<span>Wright</span></a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <a href="#pricing" class="nav-cta">Get ArcWright</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">A world-building studio for fiction writers</div>
+  <h1 class="hero-title">
+    Build worlds.<br/><em>Write them.</em>
+  </h1>
+  <div class="hero-rule"><span class="hero-rule-glyph">✦ ✦ ✦</span></div>
+  <p class="hero-subtitle">One file. Every character, faction, location, and story beat — in one place, offline, forever yours.</p>
+  <p class="hero-desc">ArcWright is a complete creative companion for fiction writers. No subscriptions. No cloud. No complexity. Just a single HTML file that opens in your browser and holds your entire world.</p>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">Get ArcWright</a>
+    <a href="#features" class="btn-secondary">See what's inside</a>
+  </div>
+  <p class="hero-note ui">Pay what you want · Minimum $1 · Yours forever</p>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="container">
+    <span class="section-eyebrow reveal">The problem every writer knows</span>
+    <h2 class="section-title reveal">Your world lives in<br/><em>twenty different places.</em></h2>
+    <div class="problem-grid">
+      <div class="problem-quotes reveal">
+        <div class="problem-quote">
+          <p>My character notes are in Notion, my plot outline is in a Google Doc, my world-building is in a notebook I can't find, and I'm writing in Word.</p>
+        </div>
+        <div class="problem-quote">
+          <p>I spent three hours trying to remember what I'd decided about a minor character's motivation. It was in a Discord message from eight months ago.</p>
+        </div>
+        <div class="problem-quote">
+          <p>I know exactly who my characters are. I just don't have anywhere to put it all that makes sense together.</p>
+        </div>
+      </div>
+      <div class="problem-answer reveal">
+        <p>The tools writers reach for weren't built for storytelling. Notion is powerful but it doesn't know what a character arc is. Google Docs is fine but it doesn't connect your villain's wound to your factions's ideology to your world's history.</p>
+        <p>ArcWright was built from the ground up for writers who think deeply about their worlds — who care not just about what happens, but why, and to whom, and what it means.</p>
+        <p>Everything lives in one file. Everything connects. And it's entirely offline — your stories never touch a server.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-intro">
+      <span class="section-eyebrow reveal">What's inside</span>
+      <h2 class="section-title reveal">Built for the way<br/><em>writers actually think.</em></h2>
+      <p class="section-body reveal">Six interconnected modules, each focused on a different layer of your story world.</p>
+    </div>
+
+    <div class="feature-tabs reveal">
+      <div class="feature-tab active" onclick="showFeature(0, this)">
+        <span class="feature-tab-num">01</span>
+        <div class="feature-tab-title">Character Sheets</div>
+        <p class="feature-tab-desc">Deep development for every person in your story.</p>
+      </div>
+      <div class="feature-tab" onclick="showFeature(1, this)">
+        <span class="feature-tab-num">02</span>
+        <div class="feature-tab-title">Factions</div>
+        <p class="feature-tab-desc">The groups, ideologies, and powers that shape your world.</p>
+      </div>
+      <div class="feature-tab" onclick="showFeature(2, this)">
+        <span class="feature-tab-num">03</span>
+        <div class="feature-tab-title">World Builder</div>
+        <p class="feature-tab-desc">Locations, lore, history — the world itself.</p>
+      </div>
+    </div>
+
+    <div class="feature-panels reveal">
+      <!-- Panel 0: Characters -->
+      <div class="feature-panel active">
+        <div class="feature-panel-text">
+          <h3>Characters who feel <em>real.</em></h3>
+          <p>Most character tools ask you to fill in a template. ArcWright asks better questions — the kind that surface who a character really is, not just what they look like.</p>
+          <p>Every sheet works through wound, want, and need. The lie they believe, and the truth they're running from. Their role in the story and their role in the world.</p>
+          <ul class="feature-list">
+            <li>Wound, want, need — the emotional core of every character</li>
+            <li>Traits with category cycling — strengths, flaws, double-edged qualities</li>
+            <li>Relationships with reciprocal auto-fill and private per-sheet notes</li>
+            <li>Arc stages with both internal journey and story position</li>
+            <li>Power systems, abilities, philosophy, tensions, scars, symbols</li>
+            <li>Portrait upload, faction badges, role color coding</li>
+            <li>Multiple sheets per character — pre-timeskip, post-war, alternate versions</li>
+          </ul>
+        </div>
+        <div class="mock-screen">
+          <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+          <div class="mock-content">
+            <div class="mock-label">Sheet title</div>
+            <div class="mock-field"><div class="mock-field-text large">Kai · Pre-Timeskip</div></div>
+            <div class="mock-field"><div class="mock-field-text">Kai Ashford</div></div>
+            <div style="display:flex;gap:5px;margin-bottom:8px;">
+              <span class="mock-tag" style="background:#E6F1FB22;border-color:#378ADD;color:#0C447C;">Hero</span>
+              <span class="mock-tag" style="background:#b8923a22;border-color:#b8923a;color:#7a4f1a;">Vanguard</span>
+            </div>
+            <div class="mock-section-header">
+              <div class="mock-section-pip" style="background:#1D9E75;"></div>
+              <span class="mock-section-name">Wound, Want & Need</span>
+            </div>
+            <div class="mock-field">
+              <div class="mock-label">The wound</div>
+              <div class="mock-field-text">Watched his village burn while he hid — carries the belief that survival is the same as cowardice.</div>
+            </div>
+            <div class="mock-row">
+              <div class="mock-half mock-field"><div class="mock-label">The want</div><div class="mock-field-text">To prove he is not afraid.</div></div>
+              <div class="mock-half mock-field"><div class="mock-label">The need</div><div class="mock-field-text">To learn that courage is not the absence of fear.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 1: Factions -->
+      <div class="feature-panel">
+        <div class="feature-panel-text">
+          <h3>Factions with <em>ideology.</em></h3>
+          <p>A faction isn't just a group — it's an argument. ArcWright treats every faction as an entity with its own origin story, internal logic, aesthetic, and fatal flaw.</p>
+          <p>Each faction has a full detail sheet alongside a live roster of its members. Add or remove characters directly. See your cast grouped by allegiance at a glance.</p>
+          <ul class="feature-list">
+            <li>Full detail sheets — ideology, origin, hierarchy, methods, aesthetic</li>
+            <li>Public reputation vs. internal reality — the gap that creates drama</li>
+            <li>Color-coded system that propagates across the entire app</li>
+            <li>Live roster with portraits — add members directly from the faction view</li>
+            <li>Expandable cast grid in the sidebar for each faction</li>
+            <li>Sidebar filter to see only characters from a given faction</li>
+          </ul>
+        </div>
+        <div class="mock-screen">
+          <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+          <div class="mock-content">
+            <div class="mock-label">Faction</div>
+            <div class="mock-field"><div class="mock-field-text large">The Vanguard</div></div>
+            <div style="margin-bottom:8px;">
+              <span class="mock-tag" style="background:#b8923a22;border-color:#b8923a;color:#b8923a;">5 members</span>
+            </div>
+            <div class="mock-section-header">
+              <div class="mock-section-pip" style="background:#b8923a;"></div>
+              <span class="mock-section-name">Ideology & Core Belief</span>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-text">Order is not oppression — it is the prerequisite of freedom. The weak cannot protect themselves, so the strong must do it for them, whether they ask or not.</div>
+            </div>
+            <div class="mock-section-header" style="margin-top:8px;">
+              <div class="mock-section-pip" style="background:#E24B4A;"></div>
+              <span class="mock-section-name">Fatal Flaw</span>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-text">They have never once asked if the people they protect actually want to be.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: World -->
+      <div class="feature-panel">
+        <div class="feature-panel-text">
+          <h3>A world with <em>memory.</em></h3>
+          <p>Characters exist somewhere. That somewhere has history, atmosphere, and meaning. ArcWright's World module gives your locations and lore the same depth as your characters.</p>
+          <p>Locations link to the characters and factions connected to them. Lore entries hold the history, belief systems, and rules that make your world feel inevitable rather than invented.</p>
+          <ul class="feature-list">
+            <li>Location sheets — atmosphere, history, who controls it, its role in the story</li>
+            <li>Hidden truths and secrets — what most of the world doesn't know</li>
+            <li>Link locations to characters and factions directly</li>
+            <li>Lore codex — History, Religion, Politics, Language, Magic, Technology</li>
+            <li>Category filtering and search across all world entries</li>
+            <li>Author notes on every entry — questions to answer later</li>
+          </ul>
+        </div>
+        <div class="mock-screen">
+          <div class="mock-dots"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div></div>
+          <div class="mock-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:1.2rem;">🏙</span>
+              <div class="mock-field-text large" style="margin:0;">The Ashfield Citadel</div>
+            </div>
+            <div class="mock-section-header">
+              <div class="mock-section-pip" style="background:#534AB7;"></div>
+              <span class="mock-section-name">Atmosphere & Tone</span>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-text">Grandiose on the outside, hollow within. The kind of place that convinces you it's alive until you've been there long enough to feel the quiet.</div>
+            </div>
+            <div class="mock-section-header" style="margin-top:8px;">
+              <div class="mock-section-pip" style="background:#E24B4A;"></div>
+              <span class="mock-section-name">Hidden Truth</span>
+            </div>
+            <div class="mock-field">
+              <div class="mock-field-text">The Citadel's foundation is built on the ruins of the city it replaced — and the people who refused to leave.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULES -->
+<section class="modules" id="modules">
+  <div class="container">
+    <span class="section-eyebrow reveal">Every layer of your story</span>
+    <h2 class="section-title reveal">Six modules.<br/><em>One world.</em></h2>
+    <div class="modules-grid reveal">
+      <!-- Top row: 4 modules -->
+      <div class="modules-row">
+        <div class="module-card">
+          <span class="module-icon">❐</span>
+          <span class="module-name">Module 01</span>
+          <div class="module-title">Projects</div>
+          <p class="module-desc">Unlimited isolated projects — each one a fully self-contained world. Switch between stories without anything bleeding across.</p>
+        </div>
+        <div class="module-card">
+          <span class="module-icon">✦</span>
+          <span class="module-name">Module 02</span>
+          <div class="module-title">Character Sheets</div>
+          <p class="module-desc">Wound, want, need, arc, relationships, power — everything a character is and why they are it.</p>
+        </div>
+        <div class="module-card">
+          <span class="module-icon">⚑</span>
+          <span class="module-name">Module 03</span>
+          <div class="module-title">Factions</div>
+          <p class="module-desc">Groups with ideology, history, aesthetic, and a live roster of members linked to their sheets.</p>
+        </div>
+        <div class="module-card">
+          <span class="module-icon">🗺</span>
+          <span class="module-name">Module 04</span>
+          <div class="module-title">Locations</div>
+          <p class="module-desc">Places with atmosphere, history, secrets, and connections to the characters and factions who inhabit them.</p>
+        </div>
+      </div>
+      <!-- Bottom row: 3 modules, centered -->
+      <div class="modules-row modules-row-bottom">
+        <div class="module-card">
+          <span class="module-icon">📜</span>
+          <span class="module-name">Module 05</span>
+          <div class="module-title">Lore Codex</div>
+          <p class="module-desc">History, religion, politics, magic systems, languages — the substrate everything else grows from.</p>
+        </div>
+        <div class="module-card">
+          <span class="module-icon">◈</span>
+          <span class="module-name">Module 06</span>
+          <div class="module-title">Story Overview</div>
+          <p class="module-desc">A horizontal timeline with freely draggable character cards, beat markers, theme notes, and tagging of characters, factions, and locations per beat.</p>
+        </div>
+        <div class="module-card">
+          <span class="module-icon">◎</span>
+          <span class="module-name">Module 07</span>
+          <div class="module-title">QuickNotes</div>
+          <p class="module-desc">A collapsible scratch pad that floats beside any section — for the thought you don't want to lose mid-scene.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <span class="section-eyebrow reveal">How it works</span>
+    <h2 class="section-title reveal">Open it.<br/><em>Start writing.</em></h2>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">I</div>
+        <div class="step-content">
+          <h3>Download one file</h3>
+          <p>ArcWright is a single self-contained HTML file. No installation, no account, no app store. Download it, save it wherever you keep your writing, and open it in any browser. That's it.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">II</div>
+        <div class="step-content">
+          <h3>Create a project</h3>
+          <p>ArcWright opens to a project directory. Create a project for each story you're working on — each one is a fully isolated world with its own characters, factions, locations, lore, and timeline. Switch between them instantly, nothing bleeds across.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">III</div>
+        <div class="step-content">
+          <h3>Build your world</h3>
+          <p>Create character folders — multiple sheets per folder for different versions or time periods. Add your factions, your locations, your lore. Everything saves automatically to its own isolated storage slot per project.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">IV</div>
+        <div class="step-content">
+          <h3>Export anytime</h3>
+          <p>Export any project as a JSON file to back it up or move it to another device. Export any individual character sheet as a clean HTML document that opens in Word or Google Docs. Duplicate a project to fork a story in a different direction while keeping the original.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">V</div>
+        <div class="step-content">
+          <h3>Your work stays yours</h3>
+          <p>Nothing you create in ArcWright ever leaves your computer. No servers, no syncing, no data collection. Your stories belong entirely to you — ArcWright is just the room you keep them in.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRINCIPLES -->
+<section class="principles">
+  <div class="container">
+    <span class="section-eyebrow reveal">What we believe</span>
+    <h2 class="section-title reveal">Made for writers<br/><em>by someone who thinks about writing.</em></h2>
+    <div class="principles-grid reveal">
+      <div class="principle">
+        <span class="principle-mark">I.</span>
+        <h4>The questions matter more than the fields</h4>
+        <p>ArcWright doesn't just ask "what does your character look like." It asks what lie they believe, what they need that they'd never admit to wanting, and what contradiction lives at their core. Better questions build better characters.</p>
+      </div>
+      <div class="principle">
+        <span class="principle-mark">II.</span>
+        <h4>Everything should connect</h4>
+        <p>A character's wound should connect to a faction's ideology should connect to a location's history should connect to a lore entry about the war that caused it all. ArcWright is built around connection, not isolation.</p>
+      </div>
+      <div class="principle">
+        <span class="principle-mark">III.</span>
+        <h4>Your world belongs to you</h4>
+        <p>No subscriptions. No accounts. No cloud storage. No analytics. ArcWright runs entirely in your browser, saves entirely to your device, and everything you create is entirely yours — now and forever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div style="text-align:center;">
+      <span class="section-eyebrow reveal">Simple pricing</span>
+      <h2 class="section-title reveal">Pay what it's worth<br/><em>to you.</em></h2>
+      <p class="section-body reveal" style="margin:0 auto 0;">We believe good tools should be accessible. Set your own price above the minimum — every purchase goes directly toward keeping ArcWright developed and supported.</p>
+    </div>
+    <div class="pricing-card reveal">
+      <div class="pricing-price" style="font-family:var(--font-ui);font-weight:300;"><span>$</span>1+</div>
+      <span class="pricing-model">Pay what you want · Minimum $1</span>
+      <p class="pricing-desc">One payment. Every feature. Every future update to this version. No subscription, no upsell, no paywall inside the app.</p>
+      <div class="pricing-includes">
+        <div class="pricing-include">Complete ArcWright application — all six modules</div>
+        <div class="pricing-include">Character sheets, factions, locations, lore, timeline, QuickNotes</div>
+        <div class="pricing-include">Unlimited characters, factions, locations, and lore entries</div>
+        <div class="pricing-include">Export to Word / Google Docs — characters and full world</div>
+        <div class="pricing-include">Fully offline — works without internet, forever</div>
+        <div class="pricing-include">Everything you create belongs entirely to you</div>
+        <div class="pricing-include">Unlimited projects — as many stories as you're writing</div>
+        <div class="pricing-include">All future updates to ArcWright v1</div>
+      </div>
+      <a href="https://dylandroptinydesigns.gumroad.com/l/ArcWright" class="pricing-cta">Get ArcWright on Gumroad</a>
+      <span class="pricing-note">Secure payment via Gumroad · Instant download · No account required</span>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div style="text-align:center;max-width:500px;margin:0 auto;">
+      <span class="section-eyebrow reveal">Questions</span>
+      <h2 class="section-title reveal">Things people<br/><em>usually ask.</em></h2>
+    </div>
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Do I need an internet connection to use ArcWright?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">No. ArcWright is a single HTML file that runs entirely in your browser. After you download it, you never need an internet connection again. It works on planes, in remote locations, anywhere.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Where does my data get saved?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">Each project saves to its own isolated slot in your browser's local storage — it stays on your device and never touches a server. We recommend using the Export Project button regularly to save a JSON backup, so you always have a copy that isn't tied to one browser on one device.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Does ArcWright work on Mac, Windows, and Linux?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">Yes. ArcWright is a browser-based application, so it works on any operating system that runs a modern browser — Chrome, Firefox, Safari, Edge. It also works on tablets, though it's optimised for desktop use.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Do I own everything I create in ArcWright?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">Completely and entirely. ArcWright is a tool — like a notebook or a word processor. Everything you put into it belongs to you. We make no claim whatsoever over your characters, your worlds, your stories, or your ideas.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">What genres is ArcWright designed for?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">All of them. ArcWright was built with fiction writers in mind broadly — it works equally well for fantasy, sci-fi, literary fiction, manga, romance, thriller, horror, and everything in between. The questions it asks are universal to storytelling, not tied to any particular genre.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Can I export my characters into Word or Google Docs?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">Yes. Every character sheet can be exported as a clean, readable HTML file that opens directly in Microsoft Word or Google Docs. The export reads like a proper document — not a form dump — and can be shared with editors, co-writers, or collaborators who don't use ArcWright.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">What happens if I close my browser? Do I lose my work?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">No. ArcWright saves automatically as you type — you'll see a "Saved ✓" indicator in the app. Your work persists in local storage between sessions as long as you're using the same browser on the same device. For long-term safety, use the Export Project button to save a JSON backup file.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Can I work on multiple stories at once?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">Yes — ArcWright opens to a project directory where you can create as many projects as you want. Each project is completely isolated: its own characters, factions, locations, lore, timeline, and settings. Switching between them is instant and nothing bleeds across. You can also duplicate a project to fork a story in a different direction while keeping the original.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Will there be updates?</span>
+          <span class="faq-q-icon">+</span>
+        </button>
+        <div class="faq-a">Yes. ArcWright is actively developed. Everyone who purchases ArcWright v1 receives all updates within that version at no additional cost. Major version releases may be paid upgrades, but we'll always communicate clearly about what's coming and what's included.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">Arc<span>Wright</span></div>
+  <p class="footer-tagline">Build worlds. Write them.</p>
+  <div class="footer-divider"></div>
+  <p class="footer-note">
+    ArcWright is an independent tool made for writers, by writers.<br/>
+    Everything you create belongs entirely to you.<br/>
+    © ArcWright — All rights reserved.
+  </p>
+</footer>
+
+<script>
+// Feature tabs
+function showFeature(idx, el) {
+  document.querySelectorAll('.feature-tab').forEach(function(t,i){ t.classList.toggle('active', i===idx); });
+  document.querySelectorAll('.feature-panel').forEach(function(p,i){ p.classList.toggle('active', i===idx); });
+}
+
+// FAQ
+function toggleFaq(btn) {
+  var item = btn.closest('.faq-item');
+  var wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(i){ i.classList.remove('open'); });
+  if (!wasOpen) item.classList.add('open');
+}
+
+// Scroll reveal
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>
